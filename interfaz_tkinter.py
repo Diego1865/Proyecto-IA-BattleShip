@@ -20,9 +20,6 @@ class BattleshipApp:
         self.disparos_computadora = crear_tablero()
         self.disparos_cpu_realizados = set()
 
-        colocar_barcos_aleatorios(self.tablero_jugador)
-        colocar_barcos_aleatorios(self.tablero_computadora)
-
         # Crear marcos de los tableros
         self.frame_jugador = tk.Frame(self.root)
         self.frame_computadora = tk.Frame(self.root)
@@ -105,7 +102,6 @@ class BattleshipApp:
                 valor = self.tablero_jugador[fila][col]
                 if valor != "_":
                     self.botones_jugador[fila][col].config(bg="blue", state="disabled")
-
 
     def jugador_dispara(self, fila, col):
         resultado = disparar(self.tablero_computadora, self.disparos_jugador, fila, col)
