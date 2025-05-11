@@ -88,7 +88,6 @@ def main():
         input("\nPresiona Enter para el siguiente turno...")
         turno += 1
 
-
 if __name__ == "__main__":
     root = Tk()
     app = BattleshipApp(root)

@@ -7,6 +7,7 @@ from logica_juego import (
     disparo_cpu,colocar_barco
 )
 from config import BARCOS,TAMANO_TABLERO
+from agente_batalla import AgenteBattleship
 
 class BattleshipApp:
     def __init__(self, root):
@@ -19,6 +20,8 @@ class BattleshipApp:
         self.disparos_jugador = crear_tablero()
         self.disparos_computadora = crear_tablero()
         self.disparos_cpu_realizados = set()
+
+        self.agente = AgenteBattleship()
 
         # Crear marcos de los tableros
         self.frame_jugador = tk.Frame(self.root)
@@ -122,7 +125,7 @@ class BattleshipApp:
             return
 
         # Turno de la CPU
-        fila_cpu, col_cpu, resultado_cpu = disparo_cpu(self.tablero_jugador, self.disparos_computadora, self.disparos_cpu_realizados)
+        fila_cpu, col_cpu, resultado_cpu = self.agente.siguiente_disparo(self.tablero_jugador, self.disparos_computadora)
         b_cpu = self.botones_jugador[fila_cpu][col_cpu]
         if resultado_cpu == "acierto":
             b_cpu.config(bg="red")
@@ -140,3 +143,35 @@ class BattleshipApp:
         for fila in self.botones_computadora:
             for btn in fila:
                 btn.config(state="disabled")
+
+        self.preguntar_reinicio()
+    
+    def preguntar_reinicio(self):
+        respuesta = messagebox.askyesno("¿Jugar de nuevo?", "¿Quieres jugar otra vez?")
+        if respuesta:
+            self.reiniciar_juego()
+        else:
+            self.root.destroy()
+        
+    def reiniciar_juego(self):
+        # Limpiar estructuras
+        self.tablero_jugador = crear_tablero()
+        self.tablero_computadora = crear_tablero()
+        self.disparos_jugador = crear_tablero()
+        self.disparos_computadora = crear_tablero()
+        self.disparos_cpu_realizados = set()
+        self.barcos_colocados = []
+        self.agente = AgenteBattleship()
+
+        # Reset botones jugador
+        for fila in range(TAMANO_TABLERO):
+            for col in range(TAMANO_TABLERO):
+                btn_j = self.botones_jugador[fila][col]
+                btn_j.config(bg="lightblue", state="normal", text="")
+                btn_j.config(command=lambda f=fila, c=col: self.colocar_barco_jugador(f, c))
+
+                btn_c = self.botones_computadora[fila][col]
+                btn_c.config(bg="SystemButtonFace", state="normal", text="")
+                btn_c.config(command=lambda f=fila, c=col: self.jugador_dispara(f, c))
+
+        messagebox.showinfo("Nuevo juego", "Coloca tus barcos para comenzar.")
