@@ -8,6 +8,8 @@ from logica_juego import (
 )
 from config import TAMANO_TABLERO
 import os
+from tkinter import Tk
+from interfaz_tkinter import BattleshipApp
 
 def limpiar_pantalla():
     os.system("cls" if os.name == "nt" else "clear")
@@ -88,4 +90,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    root = Tk()
+    app = BattleshipApp(root)
+    root.mainloop()
+    
+# if __name__ == "__main__":
+#     main()
