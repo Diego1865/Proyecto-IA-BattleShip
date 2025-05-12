@@ -4,9 +4,9 @@ import tkinter as tk
 from tkinter import messagebox
 from logica_juego import (
     crear_tablero, colocar_barcos_aleatorios, disparar, todos_los_barcos_hundidos,
-    disparo_cpu,colocar_barco
+    disparo_cpu, colocar_barco
 )
-from config import BARCOS,TAMANO_TABLERO
+from config import BARCOS, TAMANO_TABLERO
 from agente_batalla import AgenteBattleship
 
 class BattleshipApp:
@@ -36,7 +36,8 @@ class BattleshipApp:
 
         self.barcos_disponibles = list(BARCOS.keys())  # Del config
         self.barco_actual = tk.StringVar()
-        self.barco_actual.set(self.barcos_disponibles[0])
+        if self.barcos_disponibles:  # Verificar que haya barcos disponibles
+            self.barco_actual.set(self.barcos_disponibles[0])
 
         self.orientacion = tk.StringVar()
         self.orientacion.set("H")
@@ -54,12 +55,10 @@ class BattleshipApp:
                 # Tablero jugador (sólo visual)
                 b_j = tk.Button(self.frame_jugador, width=2, height=1, bg="lightblue", relief="ridge", borderwidth=1, command=lambda f=fila, c=col: self.colocar_barco_jugador(f, c))
                 b_j.grid(row=fila, column=col)
-                if self.tablero_jugador[fila][col] != "_":
-                    b_j.config(bg="blue")  # Mostrar barcos
                 fila_botones_jugador.append(b_j)
 
-                # Tablero computadora (clickeable)
-                b_c = tk.Button(self.frame_computadora, width=2, height=1, command=lambda f=fila, c=col: self.jugador_dispara(f, c))
+                # Tablero computadora (clickeable pero desactivado inicialmente)
+                b_c = tk.Button(self.frame_computadora, width=2, height=1, state="disabled", command=lambda f=fila, c=col: self.jugador_dispara(f, c))
                 b_c.grid(row=fila, column=col)
                 fila_botones_computadora.append(b_c)
 
@@ -67,16 +66,60 @@ class BattleshipApp:
             self.botones_computadora.append(fila_botones_computadora)
 
     def crear_menu_colocacion(self):
-        frame_menu = tk.Frame(self.root)
-        frame_menu.grid(row=1, column=0, columnspan=2, pady=10)
+        self.frame_menu = tk.Frame(self.root)
+        self.frame_menu.grid(row=1, column=0, columnspan=2, pady=10)
 
-        tk.Label(frame_menu, text="Barco:").pack(side="left", padx=5)
-        menu_barco = tk.OptionMenu(frame_menu, self.barco_actual, *self.barcos_disponibles)
-        menu_barco.pack(side="left")
+        # Frame para controles de colocación
+        self.frame_controles = tk.Frame(self.frame_menu)
+        self.frame_controles.pack(side="left", padx=10)
 
-        tk.Label(frame_menu, text="Orientación:").pack(side="left", padx=5)
-        menu_orientacion = tk.OptionMenu(frame_menu, self.orientacion, "H", "V")
+        tk.Label(self.frame_controles, text="Barco:").pack(side="left", padx=5)
+        self.menu_barco = tk.OptionMenu(self.frame_controles, self.barco_actual, *self.barcos_disponibles)
+        self.menu_barco.pack(side="left")
+
+        tk.Label(self.frame_controles, text="Orientación:").pack(side="left", padx=5)
+        menu_orientacion = tk.OptionMenu(self.frame_controles, self.orientacion, "H", "V")
         menu_orientacion.pack(side="left")
+
+        # Frame para mostrar barcos colocados
+        self.frame_barcos = tk.Frame(self.frame_menu)
+        self.frame_barcos.pack(side="left", padx=10)
+
+        self.actualizar_lista_barcos()
+
+    def actualizar_lista_barcos(self):
+        # Limpiar frame de barcos
+        for widget in self.frame_barcos.winfo_children():
+            widget.destroy()
+
+        # Mostrar título
+        tk.Label(self.frame_barcos, text="Barcos:").pack(anchor="w")
+
+        # Mostrar barcos disponibles
+        for barco in BARCOS.keys():
+            estado = "✓" if barco in self.barcos_colocados else "✗"
+            color = "green" if barco in self.barcos_colocados else "red"
+            tk.Label(self.frame_barcos, text=f"{barco}: {estado}", fg=color).pack(anchor="w")
+
+        # Actualizar el menú desplegable
+        self.actualizar_menu_barcos()
+
+    def actualizar_menu_barcos(self):
+        # Obtener barcos no colocados
+        barcos_restantes = [b for b in BARCOS.keys() if b not in self.barcos_colocados]
+        
+        # Actualizar el menú desplegable
+        menu = self.menu_barco["menu"]
+        menu.delete(0, "end")
+        
+        for barco in barcos_restantes:
+            menu.add_command(label=barco, command=lambda b=barco: self.barco_actual.set(b))
+        
+        # Si hay barcos restantes, establecer el primero como seleccionado
+        if barcos_restantes:
+            self.barco_actual.set(barcos_restantes[0])
+        else:
+            self.barco_actual.set("")
 
     def colocar_barco_jugador(self, fila, col):
         if len(self.barcos_colocados) == len(BARCOS):
@@ -93,6 +136,8 @@ class BattleshipApp:
         if exito:
             self.barcos_colocados.append(nombre)
             self.actualizar_tablero_jugador()
+            self.actualizar_lista_barcos()  # Actualizar la lista de barcos
+            
             if len(self.barcos_colocados) == len(BARCOS):
                 messagebox.showinfo("¡Listo!", "Todos los barcos han sido colocados. ¡Comienza la batalla!")
                 self.iniciar_juego()
@@ -139,6 +184,11 @@ class BattleshipApp:
     def iniciar_juego(self):
         colocar_barcos_aleatorios(self.tablero_computadora)  # Barcos del CPU
 
+        # Habilitar el tablero de la computadora para disparos
+        for fila in self.botones_computadora:
+            for btn in fila:
+                btn.config(state="normal")
+
     def deshabilitar_tablero(self):
         for fila in self.botones_computadora:
             for btn in fila:
@@ -154,7 +204,7 @@ class BattleshipApp:
             self.root.destroy()
         
     def reiniciar_juego(self):
-        # Limpiar estructuras
+        # Limpiar estructuras lógicas
         self.tablero_jugador = crear_tablero()
         self.tablero_computadora = crear_tablero()
         self.disparos_jugador = crear_tablero()
@@ -163,15 +213,24 @@ class BattleshipApp:
         self.barcos_colocados = []
         self.agente = AgenteBattleship()
 
-        # Reset botones jugador
-        for fila in range(TAMANO_TABLERO):
-            for col in range(TAMANO_TABLERO):
-                btn_j = self.botones_jugador[fila][col]
-                btn_j.config(bg="lightblue", state="normal", text="")
-                btn_j.config(command=lambda f=fila, c=col: self.colocar_barco_jugador(f, c))
+        # Eliminar botones existentes
+        for widget in self.frame_jugador.winfo_children():
+            widget.destroy()
+        for widget in self.frame_computadora.winfo_children():
+            widget.destroy()
 
-                btn_c = self.botones_computadora[fila][col]
-                btn_c.config(bg="SystemButtonFace", state="normal", text="")
-                btn_c.config(command=lambda f=fila, c=col: self.jugador_dispara(f, c))
+        # Limpiar listas de botones
+        self.botones_jugador = []
+        self.botones_computadora = []
+
+        # Volver a crear los tableros visuales
+        self.crear_tableros()
+
+        # Restablecer la lista de barcos
+        self.barcos_disponibles = list(BARCOS.keys())
+        if self.barcos_disponibles:
+            self.barco_actual.set(self.barcos_disponibles[0])
+        self.orientacion.set("H")
+        self.actualizar_lista_barcos()
 
         messagebox.showinfo("Nuevo juego", "Coloca tus barcos para comenzar.")
