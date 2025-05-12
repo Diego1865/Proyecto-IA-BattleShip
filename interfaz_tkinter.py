@@ -12,7 +12,7 @@ from agente_batalla import AgenteBattleship
 class BattleshipApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Batalla Naval")
+        self.root.title("Battleship")
 
         # Crear tableros
         self.tablero_jugador = crear_tablero()
