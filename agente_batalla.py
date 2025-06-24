@@ -80,7 +80,7 @@ class AgenteBattleship:
 
     def vecinos_validos(self, fila, col, tablero_disparo):
         vecinos = []
-        for df, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+        for df, dc in [(-1, 0), (0, -1), (1, 0), (0, 1)]:
             nf, nc = fila + df, col + dc
             if 0 <= nf < TAMANO_TABLERO and 0 <= nc < TAMANO_TABLERO:
                 if tablero_disparo[nf][nc] == "_":
